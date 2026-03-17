@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "heavyedge-classify"
+version = "0.0.0"
+authors = [
+    {name = "Jisoo Song", email = "jeesoo9595@snu.ac.kr"}
+]
+description = "Package to classify edge profiles"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = [
+    "LICENSE",
+]
+classifiers = [
+    "Development Status :: 1 - Planning",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Scientific/Engineering",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+homepage = "https://pypi.python.org/pypi/heavyedge-classify/"
+source = "https://github.com/heavyedge/heavyedge-classify"
+documentation = "https://heavyedge-classify.readthedocs.io"
+
+[project.optional-dependencies]
+doc = [
+    "sphinx",
+    "numpydoc",
+    "pydata_sphinx_theme",
+]
+dev = [
+    "heavyedge-clasify[doc]"
+]
