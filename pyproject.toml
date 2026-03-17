@@ -10,7 +10,7 @@ authors = [
 ]
 description = "Package to classify edge profiles"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.14"
 license = "MIT"
 license-files = [
     "LICENSE",
@@ -28,6 +28,10 @@ classifiers = [
     "Topic :: Scientific/Engineering",
     "Operating System :: OS Independent",
 ]
+dependencies = [
+    "heavyedge",
+    "aeon==1.3.0",
+]
 
 [project.urls]
 homepage = "https://pypi.python.org/pypi/heavyedge-classify/"
@@ -35,11 +39,31 @@ source = "https://github.com/heavyedge/heavyedge-classify"
 documentation = "https://heavyedge-classify.readthedocs.io"
 
 [project.optional-dependencies]
+test = [
+    "pytest",
+]
 doc = [
     "sphinx",
     "numpydoc",
     "pydata_sphinx_theme",
 ]
 dev = [
-    "heavyedge-clasify[doc]"
+    "flake8",
+    "black",
+    "isort",
+    "heavyedge-classify[test,doc]",
 ]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.isort]
+profile = "black"
+
+[tool.pytest.ini_options]
+doctest_optionflags = [
+    "NORMALIZE_WHITESPACE",
+    "IGNORE_EXCEPTION_DETAIL",
+    "ELLIPSIS",
+]
+addopts = "--ignore=doc --doctest-modules --import-mode=importlib"
