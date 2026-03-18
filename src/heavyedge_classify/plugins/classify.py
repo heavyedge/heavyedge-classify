@@ -69,3 +69,62 @@ class ClassifyTrainCommand(Command):
             pickle.dump(model, f)
 
         self.logger.info(f"Saved {args.output}.")
+
+
+@register_command("classify-predict", "Predict edge labels")
+class ClassifyPredictCommand(Command):
+    def add_parser(self, main_parser):
+        classify = main_parser.add_parser(
+            self.name,
+            description="Predict edge labels using a trained model.",
+            epilog="The output is a npy file of predicted probabilistic labels.",
+        )
+        classify.add_argument(
+            "profiles",
+            type=pathlib.Path,
+            help="Path to profile data in 'ProfileData' structure.",
+        )
+        classify.add_argument(
+            "model",
+            type=pathlib.Path,
+            help="Path to the trained model pkl file.",
+        )
+        classify.add_argument(
+            "--batch-size",
+            type=int,
+            default=None,
+            help=(
+                "Batch size to load data. "
+                "If not passed, all data are loaded at once."
+            ),
+        )
+        classify.add_argument(
+            "-o", "--output", type=pathlib.Path, help="Output file path"
+        )
+
+    def run(self, args):
+        import pickle
+
+        import numpy as np
+        from heavyedge.io import ProfileData
+
+        from heavyedge_classify.api import classify_predict
+
+        self.logger.info(f"Writing {args.output}")
+
+        with open(args.model, "rb") as f:
+            model = pickle.load(f)
+
+        profiles = ProfileData(args.profiles)
+
+        generator = classify_predict(
+            model,
+            profiles,
+            args.batch_size,
+            lambda msg: self.logger.info(f"{args.output} : {msg}"),
+        )
+        probs = np.concatenate(list(generator), axis=0)
+
+        np.save(args.output, probs)
+
+        self.logger.info(f"Saved {args.output}.")

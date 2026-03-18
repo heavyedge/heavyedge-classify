@@ -37,4 +37,12 @@ RECIPES = {
         "-o",
         path,
     ],
+    "labels-pred.npy": lambda path: [
+        "heavyedge",
+        "classify-predict",
+        get_sample_path("Profiles.h5"),
+        get_sample_path("model.pkl"),
+        "-o",
+        path,
+    ],
 }
