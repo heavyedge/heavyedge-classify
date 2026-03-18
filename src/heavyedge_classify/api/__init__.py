@@ -4,6 +4,8 @@ import contextlib
 import io
 import sys
 
+import numpy as np
+
 from ..model import minirocket_classifier
 
 __all__ = [
@@ -42,7 +44,9 @@ class _LoggerStream(io.TextIOBase):
         self._buf = ""
 
 
-def classify_train(profiles, labels, n_splits=5, random_state=0, logger=lambda x: None):
+def classify_train(
+    profiles, labels, n_splits=5, normalize=True, random_state=0, logger=lambda x: None
+):
     """Train classification model.
 
     Parameters
@@ -53,6 +57,9 @@ def classify_train(profiles, labels, n_splits=5, random_state=0, logger=lambda x
         Label array. The order of labels should match the order of profiles.
     n_splits : int, default=5
         Number of splits for cross-validation.
+    normalize : bool, default=True
+        Whether to normalize profiles by area under curve.
+        Set this to False if *profiles* are already normalized.
     random_state : int, default=0
         Random seed for reproducibility.
     logger : callable, optional
@@ -74,7 +81,10 @@ def classify_train(profiles, labels, n_splits=5, random_state=0, logger=lambda x
     >>> classify_train(profiles, labels)
     CalibratedClassifierCV(...)
     """
+    x = profiles.x()
     X, _, _ = profiles[:]
+    if normalize:
+        X /= np.trapezoid(X, x, axis=1)[..., np.newaxis]
     model = minirocket_classifier(
         n_splits=n_splits, verbose=True, random_state=random_state
     )
@@ -83,7 +93,9 @@ def classify_train(profiles, labels, n_splits=5, random_state=0, logger=lambda x
     return model
 
 
-def classify_predict(model, profiles, batch_size=None, logger=lambda x: None):
+def classify_predict(
+    model, profiles, normalize=True, batch_size=None, logger=lambda x: None
+):
     """Predict probabilistic labels of profiles using a trained model.
 
     Parameters
@@ -92,6 +104,9 @@ def classify_predict(model, profiles, batch_size=None, logger=lambda x: None):
         Trained model object.
     profiles : heavyedge.ProfileData
         Open h5 file of profiles.
+    normalize : bool, default=True
+        Whether to normalize profiles by area under curve.
+        Set this to False if *profiles* are already normalized.
     batch_size : int, optional
         Batch size to load data.
         If not passed, all data are loaded at once.
@@ -115,14 +130,19 @@ def classify_predict(model, profiles, batch_size=None, logger=lambda x: None):
     >>> [lab.shape for lab in classify_predict(model, profiles, batch_size=50)]
     [(50, 3), (25, 3)]
     """
+    x = profiles.x()
     N, _ = profiles.shape()
 
     if batch_size is None:
         X, _, _ = profiles[:]
+        if normalize:
+            X /= np.trapezoid(X, x, axis=1)[..., np.newaxis]
         yield model.predict_proba(X)
         logger(f"{N}/{N}")
     else:
         for i in range(0, N, batch_size):
             X, _, _ = profiles[i : i + batch_size]
+            if normalize:
+                X /= np.trapezoid(X, x, axis=1)[..., np.newaxis]
             yield model.predict_proba(X)
             logger(f"{min(i + batch_size, N)}/{N}")

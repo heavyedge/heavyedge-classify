@@ -35,6 +35,11 @@ class ClassifyTrainCommand(Command):
             help="Number of splits for cross-validation (default=5).",
         )
         classify.add_argument(
+            "--normalized",
+            action="store_true",
+            help="Set this flag if the input profiles are already normalized. ",
+        )
+        classify.add_argument(
             "--random-state",
             type=int,
             default=0,
@@ -52,7 +57,7 @@ class ClassifyTrainCommand(Command):
 
         from heavyedge_classify.api import classify_train
 
-        self.logger.info(f"Writing {args.output}")
+        self.logger.info(f"Training {args.output}")
 
         profiles = ProfileData(args.profiles)
         labels = np.load(args.labels)
@@ -61,6 +66,7 @@ class ClassifyTrainCommand(Command):
             profiles,
             labels,
             n_splits=args.n_splits,
+            normalize=not args.normalized,
             random_state=args.random_state,
             logger=self.logger.info,
         )
@@ -90,6 +96,11 @@ class ClassifyPredictCommand(Command):
             help="Path to the trained model pkl file.",
         )
         classify.add_argument(
+            "--normalized",
+            action="store_true",
+            help="Set this flag if the input profiles are already normalized. ",
+        )
+        classify.add_argument(
             "--batch-size",
             type=int,
             default=None,
@@ -110,7 +121,7 @@ class ClassifyPredictCommand(Command):
 
         from heavyedge_classify.api import classify_predict
 
-        self.logger.info(f"Writing {args.output}")
+        self.logger.info(f"Predicting {args.output}")
 
         with open(args.model, "rb") as f:
             model = pickle.load(f)
@@ -120,8 +131,9 @@ class ClassifyPredictCommand(Command):
         generator = classify_predict(
             model,
             profiles,
-            args.batch_size,
-            lambda msg: self.logger.info(f"{args.output} : {msg}"),
+            normalize=not args.normalized,
+            batch_size=args.batch_size,
+            logger=lambda msg: self.logger.info(f"{args.output} : {msg}"),
         )
         probs = np.concatenate(list(generator), axis=0)
 
