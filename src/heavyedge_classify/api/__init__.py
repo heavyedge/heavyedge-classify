@@ -8,6 +8,7 @@ from ..model import minirocket_classifier
 
 __all__ = [
     "classify_train",
+    "classify_predict",
 ]
 
 
@@ -80,3 +81,48 @@ def classify_train(profiles, labels, n_splits=5, random_state=0, logger=lambda x
     with contextlib.redirect_stdout(_LoggerStream(logger, sys.stdout)):
         model.fit(X, labels)
     return model
+
+
+def classify_predict(model, profiles, batch_size=None, logger=lambda x: None):
+    """Predict probabilistic labels of profiles using a trained model.
+
+    Parameters
+    ----------
+    model
+        Trained model object.
+    profiles : heavyedge.ProfileData
+        Open h5 file of profiles.
+    batch_size : int, optional
+        Batch size to load data.
+        If not passed, all data are loaded at once.
+    logger : callable, optional
+        Logger function which accepts a progress message string.
+
+    Yields
+    ------
+    predicted_labels : np.ndarray
+        Predicted probabilistic label array.
+
+    Examples
+    --------
+    >>> import pickle
+    >>> from heavyedge import ProfileData
+    >>> from heavyedge_classify.samples import get_sample_path
+    >>> from heavyedge_classify.api import classify_predict
+    >>> with open(get_sample_path("model.pkl"), "rb") as f:
+    ...     model = pickle.load(f)
+    >>> profiles = ProfileData(get_sample_path("Profiles.h5"))
+    >>> [lab.shape for lab in classify_predict(model, profiles, batch_size=50)]
+    [(50, 3), (25, 3)]
+    """
+    N, _ = profiles.shape()
+
+    if batch_size is None:
+        X, _, _ = profiles[:]
+        yield model.predict_proba(X)
+        logger(f"{N}/{N}")
+    else:
+        for i in range(0, N, batch_size):
+            X, _, _ = profiles[i : i + batch_size]
+            yield model.predict_proba(X)
+            logger(f"{min(i + batch_size, N)}/{N}")
