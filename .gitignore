@@ -1,6 +1,8 @@
 src/heavyedge_classify/samples/*
 !src/heavyedge_classify/samples/*.py
 
+.vscode
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
