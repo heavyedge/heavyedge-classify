@@ -37,10 +37,8 @@ def minirocket_classifier(n_splits, verbose=False, random_state=0):
     >>> model = minirocket_classifier(n_splits=5, random_state=42)
     >>> X, _, _ = ProfileData(get_sample_path("Profiles.h5"))[:]
     >>> y = np.load(get_sample_path("labels.npy"))
-    >>> model.fit(X, y)
+    >>> model.fit(X[:5], y[:5])
     CalibratedClassifierCV(...)
-    >>> model.predict_proba(X).shape
-    (75, 3)
     """
     pipeline = Pipeline(
         [

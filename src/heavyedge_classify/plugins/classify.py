@@ -50,20 +50,20 @@ class ClassifyTrainCommand(Command):
         import numpy as np
         from heavyedge.io import ProfileData
 
-        from heavyedge_classify.model import minirocket_classifier
+        from heavyedge_classify.api import classify_train
 
         self.logger.info(f"Writing {args.output}")
 
-        with ProfileData(args.profiles) as file:
-            X, _, _ = file[:]
-        y = np.load(args.labels)
+        profiles = ProfileData(args.profiles)
+        labels = np.load(args.labels)
 
-        model = minirocket_classifier(
+        model = classify_train(
+            profiles,
+            labels,
             n_splits=args.n_splits,
-            verbose=True,
             random_state=args.random_state,
+            logger=self.logger.info,
         )
-        model.fit(X, y)
 
         with open(args.output, "wb") as f:
             pickle.dump(model, f)
