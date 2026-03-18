@@ -69,3 +69,6 @@ doctest_optionflags = [
     "ELLIPSIS",
 ]
 addopts = "--ignore=doc --doctest-modules --import-mode=importlib"
+
+[project.entry-points."heavyedge.commands"]
+"Profile classification" = "heavyedge_classify.plugins.classify"
