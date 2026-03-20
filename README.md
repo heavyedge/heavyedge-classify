@@ -1,5 +1,6 @@
 # HeavyEdge-Classify
 
+[![HuggingFace](https://img.shields.io/badge/HuggingFace-Model-orange?logo=huggingface)](https://huggingface.co/jeesoo9595/heavyedge-classify-v1)
 [![Supported Python Versions](https://img.shields.io/pypi/pyversions/heavyedge-classify.svg)](https://pypi.python.org/pypi/heavyedge-classify/)
 [![PyPI Version](https://img.shields.io/pypi/v/heavyedge-classify.svg)](https://pypi.python.org/pypi/heavyedge-classify/)
 [![License](https://img.shields.io/github/license/heavyedge/heavyedge-classify)](https://github.com/heavyedge/heavyedge-classify/blob/master/LICENSE)
