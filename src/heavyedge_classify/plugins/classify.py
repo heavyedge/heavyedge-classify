@@ -37,7 +37,10 @@ class ClassifyTrainCommand(Command):
         classify.add_argument(
             "--normalized",
             action="store_true",
-            help="Set this flag if the input profiles are already normalized. ",
+            help=(
+                "If input profiles are already normalized, "
+                "setting this flag enhances performance."
+            ),
         )
         classify.add_argument(
             "--random-state",
