@@ -37,7 +37,7 @@ html_theme = "pydata_sphinx_theme"
 
 html_theme_options = {
     "logo": {
-        "text": "HeavyEdge-Landmarks",
+        "text": "HeavyEdge-Classify",
     },
     "show_toc_level": 2,
 }
