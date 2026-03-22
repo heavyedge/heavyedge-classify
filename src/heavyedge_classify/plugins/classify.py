@@ -14,10 +14,10 @@ class ClassifyTrainCommand(Command):
             self.name,
             description="Train edge classifier.",
             epilog=(
-                "The input label can be in npy (default) or csv format. ",
-                "If csv, the first row is the header with class names. ",
-                "Unrecognized formats are parsed as npy with a warning. ",
-                "The output is a pkl file of the trained model.",
+                "The input label can be in npy (default) or csv format. "
+                "If csv, the first row is the header with class names. "
+                "Unrecognized formats are parsed as npy with a warning. "
+                "The output is a pkl file of the trained model."
             ),
         )
         classify.add_argument(
@@ -115,9 +115,9 @@ class ClassifyPredictCommand(Command):
             self.name,
             description="Predict probabilistic labels of edges using a trained model.",
             epilog=(
-                "The output can be in npy (default) or csv format. ",
-                "If csv, the first row is the header with class names. ",
-                "Unrecognized formats are saved as npy with a warning.",
+                "The output can be in npy (default) or csv format. "
+                "If csv, the first row is the header with class names. "
+                "Unrecognized formats are saved as npy with a warning."
             ),
         )
         classify.add_argument(
