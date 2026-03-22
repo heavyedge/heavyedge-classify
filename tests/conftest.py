@@ -100,6 +100,25 @@ def tmp_traindata_path(tmp_path_factory):
         check=True,
     )
     label_path = tmp_path_factory.mktemp("Label-") / "labels.npy"
-    np.save(label_path, [1] * N_PROFILES)
+    np.save(label_path, ["Type 2"] * N_PROFILES)
 
     return (profile_path, label_path)
+
+
+@pytest.fixture(scope="session")
+def tmp_model(tmp_traindata_path, tmp_path_factory):
+    tmp_path = tmp_path_factory.mktemp("Model-")
+    profile_path, label_path = tmp_traindata_path
+    model_path = tmp_path / "model.pkl"
+    subprocess.run(
+        [
+            "heavyedge",
+            "--log-level=INFO",
+            "classify-train",
+            profile_path,
+            label_path,
+            "-o",
+            model_path,
+        ],
+    )
+    return model_path

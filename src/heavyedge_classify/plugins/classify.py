@@ -85,13 +85,17 @@ class ClassifyPredictCommand(Command):
     def add_parser(self, main_parser):
         classify = main_parser.add_parser(
             self.name,
-            description="Predict edge labels using a trained model.",
-            epilog="The output is a npy file of predicted probabilistic labels.",
+            description="Predict probabilistic labels of edges using a trained model.",
+            epilog=(
+                "The output can be in npy (default) or csv format. ",
+                "If csv, the first row is the header with class names. ",
+                "Unrecognized formats are saved as npy with a warning.",
+            ),
         )
         classify.add_argument(
             "profiles",
             type=pathlib.Path,
-            help="Path to profile data in 'ProfileData' structure.",
+            help="h5 file path to profile data in 'ProfileData' structure.",
         )
         classify.add_argument(
             "model",
@@ -116,16 +120,24 @@ class ClassifyPredictCommand(Command):
             ),
         )
         classify.add_argument(
+            "--output-format",
+            choices=["npy", "csv"],
+            help="Output file format. If not passed, parsed from file extension.",
+        )
+        classify.add_argument(
             "-o", "--output", type=pathlib.Path, help="Output file path"
         )
 
     def run(self, args):
+        import os
         import pickle
 
-        import numpy as np
         from heavyedge.io import ProfileData
 
         from heavyedge_classify.api import classify_predict
+
+        file_ext = os.path.splitext(args.output)[1].lower().lstrip(".")
+        save_format = args.output_format or file_ext
 
         self.logger.info(f"Predicting {args.output}")
 
@@ -141,8 +153,26 @@ class ClassifyPredictCommand(Command):
             batch_size=args.batch_size,
             logger=lambda msg: self.logger.info(f"{args.output} : {msg}"),
         )
-        probs = np.concatenate(list(generator), axis=0)
 
-        np.save(args.output, probs)
+        if save_format == "csv":
+            import csv
+
+            header = model.classes_
+            with open(args.output, "w", newline="") as f:
+                writer = csv.writer(f)
+                writer.writerow(header)
+                for probs in generator:
+                    writer.writerows(probs)
+
+        else:
+            if save_format != "npy":
+                self.logger.warning(
+                    f"Unrecognized format '{save_format}', saving as npy."
+                )
+
+            import numpy as np
+
+            probs = np.concatenate(list(generator), axis=0)
+            np.save(args.output, probs)
 
         self.logger.info(f"Saved {args.output}.")
