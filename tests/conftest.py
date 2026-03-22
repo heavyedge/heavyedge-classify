@@ -66,7 +66,7 @@ def tmp_traindata_path(tmp_path_factory):
     path = tmp_path_factory.mktemp("RawData-")
     rawdata_factory = RawDataFactory(path)
 
-    N_PROFILES = 5
+    N_PROFILES = 10
     DATA_SIZE = 150
     RANDOM_SCALE = 5
 
@@ -91,7 +91,6 @@ def tmp_traindata_path(tmp_path_factory):
             "--sigma=1",
             "--std-thres=40",
             "--fill-value=0",
-            "--z-thres=3.5",
             rawdir,
             "-o",
             profile_path,
@@ -100,15 +99,18 @@ def tmp_traindata_path(tmp_path_factory):
         check=True,
     )
 
-    label_npy_path = tmp_path_factory.mktemp("Label-") / "labels.npy"
-    np.save(label_npy_path, ["Type 2"] * N_PROFILES)
+    label_temp = tmp_path_factory.mktemp("Label-")
+    labels = ["Type 1"] * 5 + ["Type 2"] * 5
 
-    label_csv_path = tmp_path_factory.mktemp("Label-") / "labels.csv"
+    label_npy_path = label_temp / "labels.npy"
+    np.save(label_npy_path, labels)
+
+    label_csv_path = label_temp / "labels.csv"
     with open(label_csv_path, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(["label"])
-        for _ in range(N_PROFILES):
-            writer.writerow(["Type 2"])
+        for label in labels:
+            writer.writerow([label])
 
     return (profile_path, label_npy_path, label_csv_path)
 
@@ -125,6 +127,7 @@ def tmp_model(tmp_traindata_path, tmp_path_factory):
             "classify-train",
             profile_path,
             label_csv_path,
+            "--n-splits=2",
             "-o",
             model_path,
         ],

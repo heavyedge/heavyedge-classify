@@ -15,6 +15,7 @@ def test_train_label_npy(tmp_traindata_path, tmp_path):
             "classify-train",
             profile_path,
             label_npy_path,
+            "--n-splits=2",
             "-o",
             model_path,
         ],
@@ -33,6 +34,7 @@ def test_train_label_csv(tmp_traindata_path, tmp_path):
             "classify-train",
             profile_path,
             label_csv_path,
+            "--n-splits=2",
             "-o",
             model_path,
         ],
@@ -51,6 +53,7 @@ def test_train_log(tmp_traindata_path, tmp_path):
             "classify-train",
             profile_path,
             label_npy_path,
+            "--n-splits=2",
             "-o",
             model_path,
         ],
@@ -140,3 +143,73 @@ def test_predict_format_npy(tmp_traindata_path, tmp_model, tmp_path):
     )
     data = np.load(output_path)
     assert data.shape[0] > 0
+
+
+def test_predict_soft_label(tmp_traindata_path, tmp_model, tmp_path):
+    profile_path, _, _ = tmp_traindata_path
+    model_path = tmp_model
+
+    output_path = tmp_path / "predictions.csv"
+    subprocess.run(
+        [
+            "heavyedge",
+            "classify-predict",
+            profile_path,
+            model_path,
+            "--label-type",
+            "soft",
+            "-o",
+            output_path,
+        ],
+        check=True,
+    )
+
+    output_path = tmp_path / "predictions.npy"
+    subprocess.run(
+        [
+            "heavyedge",
+            "classify-predict",
+            profile_path,
+            model_path,
+            "--label-type",
+            "soft",
+            "-o",
+            output_path,
+        ],
+        check=True,
+    )
+
+
+def test_predict_hard_label(tmp_traindata_path, tmp_model, tmp_path):
+    profile_path, _, _ = tmp_traindata_path
+    model_path = tmp_model
+
+    output_path = tmp_path / "predictions.csv"
+    subprocess.run(
+        [
+            "heavyedge",
+            "classify-predict",
+            profile_path,
+            model_path,
+            "--label-type",
+            "hard",
+            "-o",
+            output_path,
+        ],
+        check=True,
+    )
+
+    output_path = tmp_path / "predictions.npy"
+    subprocess.run(
+        [
+            "heavyedge",
+            "classify-predict",
+            profile_path,
+            model_path,
+            "--label-type",
+            "hard",
+            "-o",
+            output_path,
+        ],
+        check=True,
+    )

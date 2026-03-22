@@ -113,7 +113,7 @@ class ClassifyPredictCommand(Command):
     def add_parser(self, main_parser):
         classify = main_parser.add_parser(
             self.name,
-            description="Predict probabilistic labels of edges using a trained model.",
+            description="Predict classification labels of edges using a trained model.",
             epilog=(
                 "The output can be in npy (default) or csv format. "
                 "If csv, the first row is the header with class names. "
@@ -145,6 +145,15 @@ class ClassifyPredictCommand(Command):
             help=(
                 "Batch size to load data. "
                 "If not passed, all data are loaded at once."
+            ),
+        )
+        classify.add_argument(
+            "--label-type",
+            choices=["soft", "hard"],
+            default="soft",
+            help=(
+                "Type of labels to output. "
+                "Soft labels are probabilistic (2D) and hard labels are discrete (1D)."
             ),
         )
         classify.add_argument(
@@ -185,12 +194,24 @@ class ClassifyPredictCommand(Command):
         if save_format == "csv":
             import csv
 
-            header = model.classes_
             with open(args.output, "w", newline="") as f:
                 writer = csv.writer(f)
+
+                if args.label_type == "soft":
+                    header = model.classes_
+                else:
+                    header = ["Label"]
                 writer.writerow(header)
+
                 for probs in generator:
-                    writer.writerows(probs)
+                    if args.label_type == "hard":
+                        # Convert probabilistic labels to hard labels
+                        labels = []
+                        for i in probs.argmax(axis=1):
+                            labels.append([model.classes_[i]])
+                    else:
+                        labels = probs
+                    writer.writerows(labels)
 
         else:
             if save_format != "npy":
@@ -201,6 +222,11 @@ class ClassifyPredictCommand(Command):
             import numpy as np
 
             probs = np.concatenate(list(generator), axis=0)
-            np.save(args.output, probs)
+            if args.label_type == "hard":
+                # Convert probabilistic labels to hard labels
+                labels = model.classes_[probs.argmax(axis=1)]
+            else:
+                labels = probs
+            np.save(args.output, labels)
 
         self.logger.info(f"Saved {args.output}.")
