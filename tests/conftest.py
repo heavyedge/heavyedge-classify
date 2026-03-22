@@ -99,16 +99,24 @@ def tmp_traindata_path(tmp_path_factory):
         capture_output=True,
         check=True,
     )
-    label_path = tmp_path_factory.mktemp("Label-") / "labels.npy"
-    np.save(label_path, ["Type 2"] * N_PROFILES)
 
-    return (profile_path, label_path)
+    label_npy_path = tmp_path_factory.mktemp("Label-") / "labels.npy"
+    np.save(label_npy_path, ["Type 2"] * N_PROFILES)
+
+    label_csv_path = tmp_path_factory.mktemp("Label-") / "labels.csv"
+    with open(label_csv_path, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["label"])
+        for _ in range(N_PROFILES):
+            writer.writerow(["Type 2"])
+
+    return (profile_path, label_npy_path, label_csv_path)
 
 
 @pytest.fixture(scope="session")
 def tmp_model(tmp_traindata_path, tmp_path_factory):
     tmp_path = tmp_path_factory.mktemp("Model-")
-    profile_path, label_path = tmp_traindata_path
+    profile_path, _, label_csv_path = tmp_traindata_path
     model_path = tmp_path / "model.pkl"
     subprocess.run(
         [
@@ -116,9 +124,10 @@ def tmp_model(tmp_traindata_path, tmp_path_factory):
             "--log-level=INFO",
             "classify-train",
             profile_path,
-            label_path,
+            label_csv_path,
             "-o",
             model_path,
         ],
+        check=True,
     )
     return model_path

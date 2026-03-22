@@ -13,18 +13,23 @@ class ClassifyTrainCommand(Command):
         classify = main_parser.add_parser(
             self.name,
             description="Train edge classifier.",
-            epilog="The output is a pkl file of the trained model.",
+            epilog=(
+                "The input label can be in npy (default) or csv format. ",
+                "If csv, the first row is the header with class names. ",
+                "Unrecognized formats are parsed as npy with a warning. ",
+                "The output is a pkl file of the trained model.",
+            ),
         )
         classify.add_argument(
             "profiles",
             type=pathlib.Path,
-            help="Path to preprocessed profile data in 'ProfileData' structure.",
+            help="h5 file path to profile data in 'ProfileData' structure.",
         )
         classify.add_argument(
             "labels",
             type=pathlib.Path,
             help=(
-                "Path to label npy file. "
+                "Path to label file. "
                 "The order of labels should match the order of profiles."
             ),
         )
@@ -43,6 +48,11 @@ class ClassifyTrainCommand(Command):
             ),
         )
         classify.add_argument(
+            "--label-format",
+            choices=["npy", "csv"],
+            help="Label file format. If not passed, parsed from file extension.",
+        )
+        classify.add_argument(
             "--random-state",
             type=int,
             default=0,
@@ -53,6 +63,7 @@ class ClassifyTrainCommand(Command):
         )
 
     def run(self, args):
+        import os
         import pickle
 
         import numpy as np
@@ -60,10 +71,27 @@ class ClassifyTrainCommand(Command):
 
         from heavyedge_classify.api import classify_train
 
+        label_ext = os.path.splitext(args.labels)[1].lower().lstrip(".")
+        label_format = args.label_format or label_ext
+
         self.logger.info(f"Training {args.output}")
 
         profiles = ProfileData(args.profiles)
-        labels = np.load(args.labels)
+
+        if label_format == "csv":
+            import csv
+
+            with open(args.labels, "r") as f:
+                reader = csv.reader(f)
+                # Burn first row as header
+                next(reader)
+                labels = np.array([row[0] for row in reader])
+        else:
+            if label_format != "npy":
+                self.logger.warning(
+                    f"Unrecognized label format '{label_format}', parsing as npy."
+                )
+            labels = np.load(args.labels)
 
         model = classify_train(
             profiles,

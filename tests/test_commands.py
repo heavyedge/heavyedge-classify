@@ -5,8 +5,44 @@ import subprocess
 import numpy as np
 
 
+def test_train_label_npy(tmp_traindata_path, tmp_path):
+    profile_path, label_npy_path, _ = tmp_traindata_path
+    model_path = tmp_path / "model.pkl"
+    subprocess.run(
+        [
+            "heavyedge",
+            "--log-level=INFO",
+            "classify-train",
+            profile_path,
+            label_npy_path,
+            "-o",
+            model_path,
+        ],
+        check=True,
+    )
+    assert os.path.exists(model_path)
+
+
+def test_train_label_csv(tmp_traindata_path, tmp_path):
+    profile_path, _, label_csv_path = tmp_traindata_path
+    model_path = tmp_path / "model.pkl"
+    subprocess.run(
+        [
+            "heavyedge",
+            "--log-level=INFO",
+            "classify-train",
+            profile_path,
+            label_csv_path,
+            "-o",
+            model_path,
+        ],
+        check=True,
+    )
+    assert os.path.exists(model_path)
+
+
 def test_train_log(tmp_traindata_path, tmp_path):
-    profile_path, label_path = tmp_traindata_path
+    profile_path, label_npy_path, _ = tmp_traindata_path
     model_path = tmp_path / "model.pkl"
     result = subprocess.run(
         [
@@ -14,7 +50,7 @@ def test_train_log(tmp_traindata_path, tmp_path):
             "--log-level=INFO",
             "classify-train",
             profile_path,
-            label_path,
+            label_npy_path,
             "-o",
             model_path,
         ],
@@ -27,7 +63,7 @@ def test_train_log(tmp_traindata_path, tmp_path):
 
 
 def test_predict_format_csv(tmp_traindata_path, tmp_model, tmp_path):
-    profile_path, _ = tmp_traindata_path
+    profile_path, _, _ = tmp_traindata_path
     model_path = tmp_model
 
     # csv output by parsing from file extension
@@ -69,7 +105,7 @@ def test_predict_format_csv(tmp_traindata_path, tmp_model, tmp_path):
 
 
 def test_predict_format_npy(tmp_traindata_path, tmp_model, tmp_path):
-    profile_path, _ = tmp_traindata_path
+    profile_path, _, _ = tmp_traindata_path
     model_path = tmp_model
 
     # npy output by parsing from file extension

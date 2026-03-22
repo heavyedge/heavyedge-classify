@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `classify-train` command now takes `--label-format` argument.
 - `classify-predict` command now takes `--output-format` argument.
 
 ## [1.0.1] - 2026-03-19
