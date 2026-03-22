@@ -15,7 +15,7 @@ class ClassifyTrainCommand(Command):
             description="Train edge classifier.",
             epilog=(
                 "The input label can be in npy (default) or csv format. "
-                "If csv, the first row is the header with class names. "
+                "If csv, the first row is the header. "
                 "Unrecognized formats are parsed as npy with a warning. "
                 "The output is a pkl file of the trained model."
             ),
