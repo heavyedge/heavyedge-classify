@@ -44,7 +44,8 @@ def get_sample_path(*paths, build=True):
         recipe = RECIPES.get("/".join(paths))
         if recipe is not None:
             commands = recipe(path)
-            subprocess.run(commands, check=True)
+            if commands is not None:
+                subprocess.run(commands, check=True)
     return path
 
 
