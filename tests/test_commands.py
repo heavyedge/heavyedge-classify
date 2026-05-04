@@ -213,3 +213,26 @@ def test_predict_hard_label(tmp_traindata_path, tmp_model, tmp_path):
         ],
         check=True,
     )
+
+
+def test_calibration_methods(tmp_traindata_path, tmp_path):
+    profile_path, label_npy_path, _ = tmp_traindata_path
+
+    for calibration in ["sigmoid", "isotonic"]:
+        model_path = tmp_path / f"model_{calibration}.pkl"
+        subprocess.run(
+            [
+                "heavyedge",
+                "--log-level=INFO",
+                "classify-train",
+                profile_path,
+                label_npy_path,
+                "--n-splits=2",
+                "--calibration",
+                calibration,
+                "-o",
+                model_path,
+            ],
+            check=True,
+        )
+        assert os.path.exists(model_path)

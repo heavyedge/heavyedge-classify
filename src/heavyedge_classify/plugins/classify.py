@@ -40,6 +40,13 @@ class ClassifyTrainCommand(Command):
             help="Number of splits for cross-validation (default=5).",
         )
         classify.add_argument(
+            "--calibration",
+            type=str,
+            choices=["sigmoid", "isotonic"],
+            default="sigmoid",
+            help="Calibration method for the classifier (default='sigmoid').",
+        )
+        classify.add_argument(
             "--normalized",
             action="store_true",
             help=(
@@ -97,6 +104,7 @@ class ClassifyTrainCommand(Command):
             profiles,
             labels,
             n_splits=args.n_splits,
+            calibration=args.calibration,
             normalize=not args.normalized,
             random_state=args.random_state,
             logger=self.logger.info,
