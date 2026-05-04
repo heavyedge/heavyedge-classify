@@ -236,3 +236,18 @@ def test_calibration_methods(tmp_traindata_path, tmp_path):
             check=True,
         )
         assert os.path.exists(model_path)
+
+        output_path = tmp_path / f"predictions_{calibration}.csv"
+        subprocess.run(
+            [
+                "heavyedge",
+                "classify-predict",
+                profile_path,
+                model_path,
+                "--label-type",
+                "soft",
+                "-o",
+                output_path,
+            ],
+            check=True,
+        )
