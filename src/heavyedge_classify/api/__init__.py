@@ -45,7 +45,13 @@ class _LoggerStream(io.TextIOBase):
 
 
 def classify_train(
-    profiles, labels, n_splits=5, normalize=True, random_state=0, logger=lambda x: None
+    profiles,
+    labels,
+    n_splits=5,
+    calibration="sigmoid",
+    normalize=True,
+    random_state=0,
+    logger=lambda x: None,
 ):
     """Train classification model.
 
@@ -57,6 +63,9 @@ def classify_train(
         Label array. The order of labels should match the order of profiles.
     n_splits : int, default=5
         Number of splits for cross-validation.
+    calibration : str, default="sigmoid"
+        Calibration method for the classifier.
+        See :class:`sklearn.calibration.CalibratedClassifierCV` for available methods.
     normalize : bool, default=True
         Whether to normalize profiles by area under curve.
         Set this to False if *profiles* are already normalized.
@@ -86,7 +95,10 @@ def classify_train(
     if normalize:
         X /= np.trapezoid(X, x, axis=1)[..., np.newaxis]
     model = minirocket_classifier(
-        n_splits=n_splits, verbose=True, random_state=random_state
+        n_splits=n_splits,
+        calibration=calibration,
+        verbose=True,
+        random_state=random_state,
     )
     with contextlib.redirect_stdout(_LoggerStream(logger, sys.stdout)):
         model.fit(X, labels)
