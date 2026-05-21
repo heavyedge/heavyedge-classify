@@ -60,6 +60,12 @@ class ClassifyTrainCommand(Command):
             help="Label file format. If not passed, parsed from file extension.",
         )
         classify.add_argument(
+            "--n-jobs",
+            type=int,
+            default=None,
+            help="Number of parallel jobs for fitting the model.",
+        )
+        classify.add_argument(
             "--random-state",
             type=int,
             default=0,
@@ -106,6 +112,7 @@ class ClassifyTrainCommand(Command):
             n_splits=args.n_splits,
             calibration=args.calibration,
             normalize=not args.normalized,
+            n_jobs=int(args.n_jobs) if args.n_jobs is not None else None,
             random_state=args.random_state,
             logger=self.logger.info,
         )

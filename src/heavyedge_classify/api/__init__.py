@@ -50,6 +50,7 @@ def classify_train(
     n_splits=5,
     calibration="sigmoid",
     normalize=True,
+    n_jobs=None,
     random_state=0,
     logger=lambda x: None,
 ):
@@ -69,6 +70,8 @@ def classify_train(
     normalize : bool, default=True
         Whether to normalize profiles by area under curve.
         Set this to False if *profiles* are already normalized.
+    n_jobs : int, default=None
+        Number of jobs to run in parallel
     random_state : int, default=0
         Random seed for reproducibility.
     logger : callable, optional
@@ -97,6 +100,7 @@ def classify_train(
     model = minirocket_classifier(
         n_splits=n_splits,
         calibration=calibration,
+        n_jobs=n_jobs,
         verbose=True,
         random_state=random_state,
     )

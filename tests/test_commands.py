@@ -65,6 +65,26 @@ def test_train_log(tmp_traindata_path, tmp_path):
     assert "[Pipeline]" in result.stderr
 
 
+def test_train_njobs(tmp_traindata_path, tmp_path):
+    profile_path, label_npy_path, _ = tmp_traindata_path
+    model_path = tmp_path / "model.pkl"
+    subprocess.run(
+        [
+            "heavyedge",
+            "--log-level=INFO",
+            "classify-train",
+            profile_path,
+            label_npy_path,
+            "--n-splits=2",
+            "--n-jobs=-1",
+            "-o",
+            model_path,
+        ],
+        check=True,
+    )
+    assert os.path.exists(model_path)
+
+
 def test_predict_format_csv(tmp_traindata_path, tmp_model, tmp_path):
     profile_path, _, _ = tmp_traindata_path
     model_path = tmp_model

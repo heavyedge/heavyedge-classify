@@ -12,7 +12,7 @@ __all__ = [
 
 
 def minirocket_classifier(
-    n_splits, calibration="sigmoid", verbose=False, random_state=0
+    n_splits, calibration="sigmoid", n_jobs=None, verbose=False, random_state=0
 ):
     """MiniRocket-based probabilistic classifier of 1D signals.
 
@@ -23,6 +23,8 @@ def minirocket_classifier(
     calibration : str, default="sigmoid"
         Calibration method for the classifier.
         See :class:`sklearn.calibration.CalibratedClassifierCV` for available methods.
+    n_jobs : int, default=None
+        Number of jobs to run in parallel.
     verbose : bool, default=False
         Prints pipeline steps.
     random_state : int, default=0
@@ -56,5 +58,6 @@ def minirocket_classifier(
         estimator=pipeline,
         method=calibration,
         cv=StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=random_state),
+        n_jobs=n_jobs,
     )
     return model
