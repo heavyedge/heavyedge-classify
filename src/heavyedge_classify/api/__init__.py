@@ -3,6 +3,7 @@
 import contextlib
 import io
 import sys
+import warnings
 
 import numpy as np
 
@@ -47,12 +48,13 @@ class _LoggerStream(io.TextIOBase):
 def classify_train(
     profiles,
     labels,
-    n_splits=5,
+    cv=5,
     calibration="sigmoid",
     normalize=True,
     n_jobs=None,
     random_state=0,
     logger=lambda x: None,
+    n_splits=None,
 ):
     """Train classification model.
 
@@ -62,8 +64,9 @@ def classify_train(
         Open h5 file of profiles.
     labels : np.ndarray
         Label array. The order of labels should match the order of profiles.
-    n_splits : int, default=5
-        Number of splits for cross-validation.
+    cv : int, iterable, or cross-validation generator, default=5
+        Cross-validation strategy.
+        If an integer is passed, it is the number of folds for stratified k-fold CV.
     calibration : {"sigmoid", "isotonic", "temperature", "sigmoid_ovo", "isotonic_ovo"}
         Calibration method for the classifier.
     normalize : bool, default=True
@@ -75,6 +78,13 @@ def classify_train(
         Random seed for reproducibility.
     logger : callable, optional
         Logger function which accepts a progress message string.
+    n_splits : int, optional
+        Number of splits for cross-validation.
+        If passed, overrides *cv*.
+
+        .. deprecated:: 1.4.0
+            The *n_splits* parameter is deprecated and will be removed in a future
+            version. Use *cv* instead.
 
     Returns
     -------
@@ -92,12 +102,23 @@ def classify_train(
     >>> classify_train(profiles, labels)
     CalibratedClassifierCV(...)
     """
+    if n_splits is not None:
+        warnings.warn(
+            (
+                "n_splits is deprecated and will be removed in a future version. "
+                "Use cv instead."
+            ),
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        cv = n_splits
+
     x = profiles.x()
     X, _, _ = profiles[:]
     if normalize:
         X /= np.trapezoid(X, x, axis=1)[..., np.newaxis]
     model = minirocket_classifier(
-        n_splits=n_splits,
+        cv=cv,
         calibration=calibration,
         n_jobs=n_jobs,
         verbose=True,

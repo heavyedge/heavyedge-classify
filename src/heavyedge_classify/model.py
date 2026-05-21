@@ -1,5 +1,7 @@
 """MiniRocket-based probabilistic classifier of 1D signals."""
 
+import warnings
+
 from aeon.transformations.collection.convolution_based import MiniRocket
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.linear_model import RidgeClassifierCV
@@ -18,14 +20,20 @@ __all__ = [
 
 
 def minirocket_classifier(
-    n_splits, calibration="sigmoid", n_jobs=None, verbose=False, random_state=0
+    cv=5,
+    calibration="sigmoid",
+    n_jobs=None,
+    verbose=False,
+    random_state=0,
+    n_splits=None,
 ):
     """MiniRocket-based probabilistic classifier of 1D signals.
 
     Parameters
     ----------
-    n_splits : int
-        Number of splits for cross-validation.
+    cv : int, iterable, or cross-validation generator, default=5
+        Cross-validation strategy.
+        If an integer is passed, it is the number of folds for stratified k-fold CV.
     calibration : {"sigmoid", "isotonic", "temperature", "sigmoid_ovo", "isotonic_ovo"}
         Calibration method for the classifier.
     n_jobs : int, default=None
@@ -34,6 +42,13 @@ def minirocket_classifier(
         Prints pipeline steps.
     random_state : int, default=0
         Random seed for reproducibility.
+    n_splits : int, optional
+        Number of splits for cross-validation.
+        If passed, overrides *cv*.
+
+        .. deprecated:: 1.4.0
+            The *n_splits* parameter is deprecated and will be removed in a future
+            version. Use *cv* instead.
 
     Returns
     -------
@@ -46,12 +61,22 @@ def minirocket_classifier(
     >>> from heavyedge_classify.samples import get_sample_path
     >>> from heavyedge_classify.model import minirocket_classifier
     >>> import numpy as np
-    >>> model = minirocket_classifier(n_splits=5, random_state=42)
+    >>> model = minirocket_classifier(cv=5, random_state=42)
     >>> X, _, _ = ProfileData(get_sample_path("Profiles.h5"))[:]
     >>> y = np.load(get_sample_path("labels.npy"))
     >>> model.fit(X[:5], y[:5])
     CalibratedClassifierCV(...)
     """
+    if n_splits is not None:
+        warnings.warn(
+            (
+                "n_splits is deprecated and will be removed in a future version. "
+                "Use cv instead."
+            ),
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        cv = n_splits
     pipeline = Pipeline(
         [
             ("minirocket", MiniRocket(random_state=random_state)),
@@ -59,7 +84,8 @@ def minirocket_classifier(
         ],
         verbose=verbose,
     )
-    cv = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=random_state)
+    if isinstance(cv, int):
+        cv = StratifiedKFold(n_splits=cv, shuffle=True, random_state=random_state)
     if calibration in ("sigmoid", "isotonic"):
         model = CalibratedClassifierCV(
             estimator=pipeline,
