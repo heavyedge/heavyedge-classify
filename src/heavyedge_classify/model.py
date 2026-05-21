@@ -1,5 +1,7 @@
 """MiniRocket-based probabilistic classifier of 1D signals."""
 
+import warnings
+
 from aeon.transformations.collection.convolution_based import MiniRocket
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.linear_model import RidgeClassifierCV
@@ -41,7 +43,12 @@ def minirocket_classifier(
     random_state : int, default=0
         Random seed for reproducibility.
     n_splits : int, optional
-        Deprecated. Use *cv* instead.
+        Number of splits for cross-validation.
+        If passed, overrides *cv*.
+
+        .. deprecated:: 1.4.0
+            The *n_splits* parameter is deprecated and will be removed in a future
+            version. Use *cv* instead.
 
     Returns
     -------
@@ -61,8 +68,13 @@ def minirocket_classifier(
     CalibratedClassifierCV(...)
     """
     if n_splits is not None:
-        print(
-            "Warning: n_splits is deprecated and will be removed in future versions. Use cv instead."
+        warnings.warn(
+            (
+                "n_splits is deprecated and will be removed in a future version. "
+                "Use cv instead."
+            ),
+            DeprecationWarning,
+            stacklevel=2,
         )
         cv = n_splits
     pipeline = Pipeline(

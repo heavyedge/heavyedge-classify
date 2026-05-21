@@ -11,9 +11,15 @@ def test_calibration_methods(tmp_traindata_path):
     X, _, _ = ProfileData(profile_path)[:]
     y = np.load(label_npy_path)
 
-    for calibration in ["sigmoid", "isotonic"]:
+    for calibration in [
+        "sigmoid",
+        "isotonic",
+        "temperature",
+        "sigmoid_ovo",
+        "isotonic_ovo",
+    ]:
         model = minirocket_classifier(
-            n_splits=2,
+            cv=2,
             calibration=calibration,
             random_state=42,
         )
@@ -23,13 +29,19 @@ def test_calibration_methods(tmp_traindata_path):
 def test_classify_train(tmp_traindata_path):
     profile_path, label_npy_path, _ = tmp_traindata_path
 
-    for calibration in ["sigmoid", "isotonic"]:
+    for calibration in [
+        "sigmoid",
+        "isotonic",
+        "temperature",
+        "sigmoid_ovo",
+        "isotonic_ovo",
+    ]:
         profiles = ProfileData(profile_path)
         labels = np.load(label_npy_path)
         classify_train(
             profiles,
             labels,
-            n_splits=2,
+            cv=2,
             calibration=calibration,
             random_state=42,
         )

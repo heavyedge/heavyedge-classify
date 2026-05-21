@@ -115,7 +115,7 @@ class ClassifyTrainCommand(Command):
         model = classify_train(
             profiles,
             labels,
-            n_splits=args.n_splits,
+            cv=args.n_splits,
             calibration=args.calibration,
             normalize=not args.normalized,
             n_jobs=int(args.n_jobs) if args.n_jobs is not None else None,

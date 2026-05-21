@@ -3,6 +3,7 @@
 import contextlib
 import io
 import sys
+import warnings
 
 import numpy as np
 
@@ -78,7 +79,12 @@ def classify_train(
     logger : callable, optional
         Logger function which accepts a progress message string.
     n_splits : int, optional
-        Deprecated. Use *cv* instead.
+        Number of splits for cross-validation.
+        If passed, overrides *cv*.
+
+        .. deprecated:: 1.4.0
+            The *n_splits* parameter is deprecated and will be removed in a future
+            version. Use *cv* instead.
 
     Returns
     -------
@@ -97,8 +103,13 @@ def classify_train(
     CalibratedClassifierCV(...)
     """
     if n_splits is not None:
-        logger(
-            "Warning: n_splits is deprecated and will be removed in future versions. Use cv instead."
+        warnings.warn(
+            (
+                "n_splits is deprecated and will be removed in a future version. "
+                "Use cv instead."
+            ),
+            DeprecationWarning,
+            stacklevel=2,
         )
         cv = n_splits
 
