@@ -238,7 +238,13 @@ def test_predict_hard_label(tmp_traindata_path, tmp_model, tmp_path):
 def test_calibration_methods(tmp_traindata_path, tmp_path):
     profile_path, label_npy_path, _ = tmp_traindata_path
 
-    for calibration in ["sigmoid", "isotonic"]:
+    for calibration in [
+        "sigmoid",
+        "isotonic",
+        "temperature",
+        "sigmoid_ovo",
+        "isotonic_ovo",
+    ]:
         model_path = tmp_path / f"model_{calibration}.pkl"
         subprocess.run(
             [

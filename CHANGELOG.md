@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `n-jobs` can now be specified for training.
+- Add `temperature` to calibration option.
+- Add `sigmoid_ovo` to calibration option.
+- Add `isotonic_ovo` to calibration option.
 
 ## [1.2.0] - 2026-05-04
 

@@ -64,9 +64,8 @@ def classify_train(
         Label array. The order of labels should match the order of profiles.
     n_splits : int, default=5
         Number of splits for cross-validation.
-    calibration : str, default="sigmoid"
+    calibration : {"sigmoid", "isotonic", "temperature", "sigmoid_ovo", "isotonic_ovo"}
         Calibration method for the classifier.
-        See :class:`sklearn.calibration.CalibratedClassifierCV` for available methods.
     normalize : bool, default=True
         Whether to normalize profiles by area under curve.
         Set this to False if *profiles* are already normalized.

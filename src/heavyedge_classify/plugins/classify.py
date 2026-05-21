@@ -42,7 +42,13 @@ class ClassifyTrainCommand(Command):
         classify.add_argument(
             "--calibration",
             type=str,
-            choices=["sigmoid", "isotonic"],
+            choices=[
+                "sigmoid",
+                "isotonic",
+                "temperature",
+                "sigmoid_ovo",
+                "isotonic_ovo",
+            ],
             default="sigmoid",
             help="Calibration method for the classifier (default='sigmoid').",
         )
