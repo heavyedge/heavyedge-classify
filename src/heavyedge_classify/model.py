@@ -11,7 +11,6 @@ from sklearn.pipeline import Pipeline
 from .calibration import (
     IsotonicOvOCalibratedClassifierCV,
     SigmoidOvOCalibratedClassifierCV,
-    TemperatureCalibratedClassifierCV,
 )
 
 __all__ = [
@@ -86,16 +85,10 @@ def minirocket_classifier(
     )
     if isinstance(cv, int):
         cv = StratifiedKFold(n_splits=cv, shuffle=True, random_state=random_state)
-    if calibration in ("sigmoid", "isotonic"):
+    if calibration in ("sigmoid", "isotonic", "temperature"):
         model = CalibratedClassifierCV(
             estimator=pipeline,
             method=calibration,
-            cv=cv,
-            n_jobs=n_jobs,
-        )
-    elif calibration == "temperature":
-        model = TemperatureCalibratedClassifierCV(
-            estimator=pipeline,
             cv=cv,
             n_jobs=n_jobs,
         )
