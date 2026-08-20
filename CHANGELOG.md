@@ -12,14 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Temperature calibration now uses scikit-learn's native
   `CalibratedClassifierCV(method="temperature")` when available, while keeping
   the package backport for older scikit-learn releases.
-- Python 3.10 support has been restored.
-- Runtime dependencies now allow older scikit-learn and aeon releases again,
-  and add `packaging` for scikit-learn version detection.
 
 ### Deprecated
 
-- Support for scikit-learn `<1.8.0` in `TemperatureCalibratedClassifierCV` is
-  deprecated and will be removed in v2.0.0.
+- Support for scikit-learn `<1.8.0` is deprecated and will be removed in v2.0.0.
 
 ## [1.4.0] - 2026-05-22
 
