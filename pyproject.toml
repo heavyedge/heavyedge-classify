@@ -10,7 +10,7 @@ authors = [
 ]
 description = "Package to classify edge profiles"
 readme = "README.md"
-requires-python = ">=3.10,<3.14"
+requires-python = ">=3.11"
 license = "MIT"
 license-files = [
     "LICENSE",
