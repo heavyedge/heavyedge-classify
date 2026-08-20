@@ -1,16 +1,21 @@
-"""Calibration methods for scikit-learn<1.8.0."""
+"""Calibration methods for scikit-learn."""
 
+import warnings
 from itertools import combinations
 
 import numpy as np
 from joblib import Parallel, delayed
+from packaging.version import Version
 from scipy.optimize import minimize_scalar
+from sklearn import __version__ as _sklearn_version
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
-from sklearn.calibration import _SigmoidCalibration
+from sklearn.calibration import CalibratedClassifierCV, _SigmoidCalibration
 from sklearn.isotonic import IsotonicRegression
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils.extmath import softmax
 from sklearn.utils.validation import check_is_fitted
+
+_SKLEARN_GE_1_8 = Version(_sklearn_version) >= Version("1.8.0")
 
 __all__ = [
     "TemperatureCalibratedClassifierCV",
@@ -129,12 +134,25 @@ def _fit_one_fold(estimator, X, y, train, test, classes):
 
 
 class TemperatureCalibratedClassifierCV(ClassifierMixin, BaseEstimator):
-    """Cross-validated temperature-scaling calibration.
+    """Deprecated standalone cross-validated temperature-scaling calibration.
 
-    Backported from scikit-learn 1.8.0.
+    .. deprecated::
+        scikit-learn < 1.8.0 support is deprecated and will be removed in
+        v2.0.0 of this package. Upgrade to scikit-learn >= 1.8.0 to use
+        :class:`sklearn.calibration.CalibratedClassifierCV` with
+        ``method='temperature'`` natively.
     """
 
     def __init__(self, estimator, *, cv=5, n_jobs=1):
+        warnings.warn(
+            (
+                "scikit-learn < 1.8.0 support in TemperatureCalibratedClassifierCV "
+                "is deprecated and will be removed in v2.0.0 of this package. "
+                "Upgrade to scikit-learn >= 1.8.0."
+            ),
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self.estimator = estimator
         self.cv = cv
         self.n_jobs = n_jobs
@@ -169,6 +187,24 @@ class TemperatureCalibratedClassifierCV(ClassifierMixin, BaseEstimator):
     def predict(self, X):
         check_is_fitted(self)
         return self.classes_[np.argmax(self.predict_proba(X), axis=1)]
+
+
+if _SKLEARN_GE_1_8:
+
+    class TemperatureCalibratedClassifierCV(CalibratedClassifierCV):  # noqa: F811
+        """Cross-validated temperature-scaling calibration.
+
+        A thin subclass of :class:`sklearn.calibration.CalibratedClassifierCV`
+        that defaults to ``method='temperature'`` (requires scikit-learn >= 1.8.0).
+        """
+
+        def __init__(self, estimator, *, cv=5, n_jobs=1):
+            super().__init__(
+                estimator=estimator,
+                method="temperature",
+                cv=cv,
+                n_jobs=n_jobs,
+            )
 
 
 def _ovo_couple(r_pairs, n_classes, n_samples):

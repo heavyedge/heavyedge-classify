@@ -1,7 +1,12 @@
 import numpy as np
+import pytest
 from heavyedge import ProfileData
 
 from heavyedge_classify.api import classify_train
+from heavyedge_classify.calibration import (
+    _SKLEARN_GE_1_8,
+    TemperatureCalibratedClassifierCV,
+)
 from heavyedge_classify.model import minirocket_classifier
 
 
@@ -45,3 +50,18 @@ def test_classify_train(tmp_traindata_path):
             calibration=calibration,
             random_state=42,
         )
+
+
+def test_temperature_calibration_alias():
+    if _SKLEARN_GE_1_8:
+        model = TemperatureCalibratedClassifierCV(estimator="estimator", cv=2, n_jobs=3)
+    else:
+        with pytest.deprecated_call(match="TemperatureCalibratedClassifierCV"):
+            model = TemperatureCalibratedClassifierCV(
+                estimator="estimator", cv=2, n_jobs=3
+            )
+
+    assert isinstance(model, TemperatureCalibratedClassifierCV)
+    assert model.estimator == "estimator"
+    assert model.cv == 2
+    assert model.n_jobs == 3
