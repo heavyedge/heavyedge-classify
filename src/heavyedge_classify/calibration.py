@@ -206,6 +206,7 @@ if _SKLEARN_GE_1_8:
                 n_jobs=n_jobs,
             )
 
+
 def _ovo_couple(r_pairs, n_classes, n_samples):
     """Convert OvO pairwise probabilities to multiclass probabilities.
 
