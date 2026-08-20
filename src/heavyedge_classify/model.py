@@ -3,6 +3,8 @@
 import warnings
 
 from aeon.transformations.collection.convolution_based import MiniRocket
+from sklearn import __version__ as _sklearn_version
+from packaging.version import Version
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.model_selection import StratifiedKFold
@@ -11,7 +13,10 @@ from sklearn.pipeline import Pipeline
 from .calibration import (
     IsotonicOvOCalibratedClassifierCV,
     SigmoidOvOCalibratedClassifierCV,
+    TemperatureCalibratedClassifierCV,
 )
+
+_SKLEARN_GE_1_8 = Version(_sklearn_version) >= Version("1.8.0")
 
 __all__ = [
     "minirocket_classifier",
@@ -85,13 +90,27 @@ def minirocket_classifier(
     )
     if isinstance(cv, int):
         cv = StratifiedKFold(n_splits=cv, shuffle=True, random_state=random_state)
-    if calibration in ("sigmoid", "isotonic", "temperature"):
+    if calibration in ("sigmoid", "isotonic"):
         model = CalibratedClassifierCV(
             estimator=pipeline,
             method=calibration,
             cv=cv,
             n_jobs=n_jobs,
         )
+    elif calibration == "temperature":
+        if _SKLEARN_GE_1_8:
+            model = CalibratedClassifierCV(
+                estimator=pipeline,
+                method="temperature",
+                cv=cv,
+                n_jobs=n_jobs,
+            )
+        else:
+            model = TemperatureCalibratedClassifierCV(
+                estimator=pipeline,
+                cv=cv,
+                n_jobs=n_jobs,
+            )
     elif calibration == "sigmoid_ovo":
         model = SigmoidOvOCalibratedClassifierCV(
             estimator=pipeline,
