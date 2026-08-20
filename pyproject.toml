@@ -30,7 +30,7 @@ classifiers = [
 ]
 dependencies = [
     "heavyedge",
-    "scikit-learn>=1.8.0",
+    "scikit-learn>=1.7.0",
     "aeon>=1.5.0",
 ]
 
