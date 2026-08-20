@@ -1,7 +1,7 @@
 """Calibration methods for scikit-learn."""
 
-from itertools import combinations
 import warnings
+from itertools import combinations
 
 import numpy as np
 from joblib import Parallel, delayed
