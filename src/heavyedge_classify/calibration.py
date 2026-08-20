@@ -1,16 +1,18 @@
-"""OvO calibration methods for scikit-learn."""
+"""Calibration methods for scikit-learn."""
 
 from itertools import combinations
+import warnings
 
 import numpy as np
 from joblib import Parallel, delayed
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
-from sklearn.calibration import _SigmoidCalibration
+from sklearn.calibration import CalibratedClassifierCV, _SigmoidCalibration
 from sklearn.isotonic import IsotonicRegression
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils.validation import check_is_fitted
 
 __all__ = [
+    "TemperatureCalibratedClassifierCV",
     "SigmoidOvOCalibratedClassifierCV",
     "IsotonicOvOCalibratedClassifierCV",
 ]
@@ -21,6 +23,27 @@ def _get_response(estimator, X):
     if hasattr(estimator, "decision_function"):
         return estimator.decision_function(X)
     return estimator.predict_proba(X)
+
+
+class TemperatureCalibratedClassifierCV(CalibratedClassifierCV):
+    """Deprecated alias for temperature-scaled calibration."""
+
+    def __init__(self, estimator, *, cv=5, n_jobs=1):
+        warnings.warn(
+            (
+                "TemperatureCalibratedClassifierCV is deprecated and will be "
+                "removed in a future version. Use "
+                "CalibratedClassifierCV(method='temperature', ...) instead."
+            ),
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(
+            estimator=estimator,
+            method="temperature",
+            cv=cv,
+            n_jobs=n_jobs,
+        )
 
 
 def _ovo_couple(r_pairs, n_classes, n_samples):
