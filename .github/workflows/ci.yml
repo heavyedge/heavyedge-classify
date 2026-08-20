@@ -44,7 +44,11 @@ jobs:
       fail-fast: false
       matrix:
         os : [ubuntu-latest, windows-latest, macos-latest]
-        python: ["3.11", "3.12", "3.13"]
+        python: ["3.10", "3.11", "3.12", "3.13"]
+        sklearn: ["<1.8.0", ">=1.8.0"]
+        exclude:
+          - python: "3.10"
+            sklearn: ">=1.8.0"
 
     steps:
 
@@ -59,6 +63,10 @@ jobs:
       - name: install package
         run: |
           pip install .[test]
+
+      - name: install scikit-learn version
+        run: |
+          pip install "scikit-learn${{ matrix.sklearn }}"
 
       - run: pytest
 
