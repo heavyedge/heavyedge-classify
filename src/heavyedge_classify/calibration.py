@@ -5,10 +5,12 @@ from itertools import combinations
 
 import numpy as np
 from joblib import Parallel, delayed
+from scipy.optimize import minimize_scalar
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
-from sklearn.calibration import CalibratedClassifierCV, _SigmoidCalibration
+from sklearn.calibration import _SigmoidCalibration
 from sklearn.isotonic import IsotonicRegression
 from sklearn.preprocessing import LabelEncoder
+from sklearn.utils.extmath import softmax
 from sklearn.utils.validation import check_is_fitted
 
 __all__ = [
@@ -25,8 +27,115 @@ def _get_response(estimator, X):
     return estimator.predict_proba(X)
 
 
-class TemperatureCalibratedClassifierCV(CalibratedClassifierCV):
-    """Deprecated alias for temperature-scaled calibration."""
+def _convert_to_logits(values, eps=1e-12):
+    """Convert decision_function / predict_proba output to 2-D logits.
+
+    - 1-D decision values ``(n,)`` -> ``(n, 2)`` as ``(-x, x)``.
+    - 2-D with one column ``(n, 1)`` -> same treatment.
+    - 2-D probabilities (rows sum to 1) -> ``log(p + eps)``.
+    - Otherwise returned as-is.
+    """
+    values = np.asarray(values, dtype=np.float64)
+
+    if values.ndim == 2 and values.shape[1] > 1:
+        is_prob = np.all(values >= 0) and np.all(values <= 1)
+        sums_one = np.allclose(values.sum(axis=1), 1.0)
+        if is_prob and sums_one:
+            return np.log(values + eps)
+        return values
+
+    if values.ndim == 1:
+        values = values.reshape(-1, 1)
+    # binary: shape (n, 1) -> (n, 2)
+    return np.concatenate([-values, values], axis=1)
+
+
+class _TemperatureScaling:
+    """Learn a single inverse-temperature beta so that ``softmax(beta * logits)``
+    minimises the multinomial cross-entropy on a calibration set.
+    """
+
+    def fit(self, X, y, sample_weight=None):
+        logits = _convert_to_logits(X)
+        dtype = logits.dtype
+        labels = np.asarray(y, dtype=np.intp).ravel()
+
+        if sample_weight is not None:
+            sw = np.asarray(sample_weight, dtype=dtype)
+        else:
+            sw = None
+
+        n = len(labels)
+        idx = np.arange(n)
+
+        def _nll(log_beta):
+            beta = np.exp(log_beta)
+            probs = softmax(beta * logits)
+            lp = np.log(np.clip(probs[idx, labels], 1e-15, None))
+            if sw is not None:
+                return -(sw * lp).sum() / sw.sum()
+            return -lp.mean()
+
+        res = minimize_scalar(
+            _nll,
+            bounds=(-10.0, 10.0),
+            method="bounded",
+            options={"xatol": 64 * np.finfo(dtype).eps},
+        )
+        if not res.success:
+            raise RuntimeError(
+                "Temperature scaling optimisation failed: " + str(res.message)
+            )
+
+        self.beta_ = np.exp(res.x)
+        return self
+
+    def predict(self, X):
+        logits = _convert_to_logits(X)
+        return softmax(self.beta_ * logits)
+
+
+class _CalibratedClassifier:
+    """A fitted estimator paired with a fitted temperature calibrator."""
+
+    def __init__(self, estimator, calibrator, classes):
+        self.estimator = estimator
+        self.calibrator = calibrator
+        self.classes = classes
+
+    def predict_proba(self, X):
+        raw = _get_response(self.estimator, X)
+        proba = self.calibrator.predict(raw)
+        # Guard against tiny floating-point overshoots.
+        proba[(1.0 < proba) & (proba <= 1.0 + 1e-5)] = 1.0
+        return proba
+
+
+def _fit_one_fold(estimator, X, y, train, test, classes):
+    """Clone *estimator*, fit on *train*, calibrate on *test*."""
+    est = clone(estimator)
+    est.fit(X[train], y[train])
+
+    raw = _get_response(est, X[test])
+    if raw.ndim == 1:
+        raw = raw.reshape(-1, 1)
+
+    le = LabelEncoder().fit(classes)
+    y_enc = le.transform(y[test])
+
+    cal = _TemperatureScaling()
+    cal.fit(raw, y_enc)
+
+    return _CalibratedClassifier(est, cal, classes)
+
+
+class TemperatureCalibratedClassifierCV(ClassifierMixin, BaseEstimator):
+    """Deprecated standalone cross-validated temperature-scaling calibration.
+
+    .. deprecated::
+        Use :class:`sklearn.calibration.CalibratedClassifierCV` with
+        ``method='temperature'`` (requires scikit-learn >= 1.8.0) instead.
+    """
 
     def __init__(self, estimator, *, cv=5, n_jobs=1):
         warnings.warn(
@@ -38,13 +147,40 @@ class TemperatureCalibratedClassifierCV(CalibratedClassifierCV):
             DeprecationWarning,
             stacklevel=2,
         )
-        super().__init__(
-            estimator=estimator,
-            method="temperature",
-            cv=cv,
-            n_jobs=n_jobs,
+        self.estimator = estimator
+        self.cv = cv
+        self.n_jobs = n_jobs
+
+    def fit(self, X, y):
+        le = LabelEncoder().fit(y)
+        self.classes_ = le.classes_
+
+        if hasattr(self.cv, "split"):
+            splits = list(self.cv.split(X, y))
+        else:
+            splits = list(self.cv)
+
+        self.calibrated_classifiers_ = Parallel(n_jobs=self.n_jobs)(
+            delayed(_fit_one_fold)(self.estimator, X, y, train, test, self.classes_)
+            for train, test in splits
         )
 
+        first = self.calibrated_classifiers_[0].estimator
+        if hasattr(first, "n_features_in_"):
+            self.n_features_in_ = first.n_features_in_
+        return self
+
+    def predict_proba(self, X):
+        check_is_fitted(self)
+        mean_proba = np.zeros((X.shape[0], len(self.classes_)))
+        for cc in self.calibrated_classifiers_:
+            mean_proba += cc.predict_proba(X)
+        mean_proba /= len(self.calibrated_classifiers_)
+        return mean_proba
+
+    def predict(self, X):
+        check_is_fitted(self)
+        return self.classes_[np.argmax(self.predict_proba(X), axis=1)]
 
 def _ovo_couple(r_pairs, n_classes, n_samples):
     """Convert OvO pairwise probabilities to multiclass probabilities.
