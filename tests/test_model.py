@@ -1,11 +1,11 @@
 import numpy as np
 import pytest
 from heavyedge import ProfileData
+from sklearn.calibration import CalibratedClassifierCV
 
 from heavyedge_classify.api import classify_train
 from heavyedge_classify.calibration import TemperatureCalibratedClassifierCV
 from heavyedge_classify.model import minirocket_classifier
-from sklearn.calibration import CalibratedClassifierCV
 
 
 def test_calibration_methods(tmp_traindata_path):
